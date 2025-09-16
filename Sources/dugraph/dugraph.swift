@@ -7,102 +7,51 @@
 import ArgumentParser
 import Foundation
 
-protocol Item: Codable {
-  var id: Int { get }
-  var displayNameWithSize: String? { get }
-  var locDisplayNameWithSize: String? { get }
-  var locDisplayNameWithSizeDE: String? { get }
-}
-
-extension Item {
-  var name: String {
-    return locDisplayNameWithSize ?? displayNameWithSize ?? "Unknown Item"
-  }
-}
-
-struct BasicItem: Item, Codable {
-  let id: Int
-  let displayNameWithSize: String?
-  let locDisplayNameWithSize: String?
-  let locDisplayNameWithSizeDE: String?
-}
-
-struct CountedItem: Item, Codable {
-  let id: Int
-  let displayNameWithSize: String?
-  let locDisplayNameWithSize: String?
-  let locDisplayNameWithSizeDE: String?
-  let quantity: Double
-}
-
-struct Recipe: Codable {
-  let id: Int
-  let tier: Int
-  let time: Int  // in seconds
-  let nanocraftable: Bool
-  let ingredients: [CountedItem]
-  let products: [CountedItem]
-  let producers: [BasicItem]
-}
-
 @main
 struct dugraph: ParsableCommand {
   mutating func run() throws {
     let recipes = try loadRecipes()
+    let recipeIndex = RecipeIndex(recipes: recipes)
+
     print("Loaded \(recipes.count) recipes.")
 
-    var items: [Int: Item] = [:]
-    for recipe in recipes {
-      for product in recipe.products {
-        items[product.id] = product
-      }
-      for ingredient in recipe.ingredients {
-        items[ingredient.id] = ingredient
+    let items = ItemIndex(recipes: recipes)
+    print("got \(items.count) unique items.")
+    reportUnnamedItems(items)
+
+    let producers = ProducerIndex(recipes: recipes)
+    print("got \(producers.count) producers.")
+
+    for producer in producers.sortedProducers {
+      if producer.tier == .basic {
+        var allOverlaps: Set<Int> = []
+        for recipeID in producer.recipes {
+          if let recipe = recipeIndex.recipesByID[recipeID] {
+            let ingredients = Set(recipe.ingredients.map { $0.id })
+            allOverlaps.formUnion(producer.products.intersection(ingredients))
+          }
+        }
+
+        if !allOverlaps.isEmpty {
+          let overlappingItems = allOverlaps.compactMap { items.itemsByID[$0] }
+          print(" - \(producer.name) uses ingredients which it also makes:")
+          for item in overlappingItems {
+            let recipes = recipeIndex.recipesUsing(itemID: item.id).filter {
+              producer.recipes.contains($0.id)
+            }
+            print(
+              " -  \(item.name) for \(recipes.map { $0.name }.joined(separator: ", "))"
+            )
+          }
+        }
+        print("\n\n")
       }
     }
+  }
 
-    let unnamed =
-      items
-      .filter {
-        $0.value.name == "Unknown Item"
-      }
-      .map { $0.value.id }
+  private func reportUnnamedItems(_ items: ItemIndex) {
+    let unnamed = items.unnamed.map { $0.id }
     print("Recipes with unnamed products: \(unnamed)")
-
-    try loadItems()
   }
 
-  private func loadRecipes() throws -> [Recipe] {
-    guard
-      let recipesURL = Bundle.module.url(
-        forResource: "recipes_api_dump", withExtension: "json", subdirectory: "Data")
-    else {
-      throw NSError(
-        domain: "dugraph", code: 1,
-        userInfo: [NSLocalizedDescriptionKey: "Failed to locate JSON file."])
-    }
-
-    let recipesData = try Data(contentsOf: recipesURL)
-    let decoder = JSONDecoder()
-    return try decoder.decode([Recipe].self, from: recipesData)
-  }
-
-  private func loadItems() throws {
-    guard
-      let itemsURL = Bundle.module.url(
-        forResource: "items_api_dump", withExtension: "json", subdirectory: "Data")
-    else {
-      print("Failed to locate JSON file.")
-      return
-    }
-
-    let itemsData = try Data(contentsOf: itemsURL)
-    let itemsObject = try JSONSerialization.jsonObject(with: itemsData, options: [])
-    guard let items = itemsObject as? [[String: Any]] else {
-      print("Failed to cast JSON object to [String: Any]")
-      return
-    }
-
-    print("Loaded \(items.count) items.")
-  }
 }
