@@ -10,4 +10,8 @@ struct Recipe: Codable {
   var name: String {
     products.first?.name ?? "Unknown Recipe"
   }
+
+  var basicName: String {
+    products.first?.basicName ?? "Unknown Recipe"
+  }
 }

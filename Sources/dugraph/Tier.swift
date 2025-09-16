@@ -1,4 +1,4 @@
-enum Tier: Int, Codable {
+enum Tier: Int, Codable, CaseIterable {
   case unknown = 0
   case basic = 1
   case uncommon = 2

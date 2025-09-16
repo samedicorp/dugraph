@@ -29,4 +29,13 @@ extension Item {
     }
     return .unknown
   }
+
+  var basicName: String {
+    let wordsToRemove = [
+      "Basic", "Uncommon", "Advanced", "Rare", "xs", "s", "m", "l", "xl", "product",
+    ]
+    let words = name.split(separator: " ")
+    let filtered = words.filter { !wordsToRemove.contains(String($0)) }
+    return filtered.joined(separator: " ")
+  }
 }
