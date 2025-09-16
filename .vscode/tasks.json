@@ -1,0 +1,21 @@
+{
+	"tasks": [
+		{
+			"type": "swift",
+			"args": [
+				"build",
+				"--build-tests"
+			],
+			"env": {},
+			"cwd": "/Users/sam/Developer/Projects/dugraph",
+			"disableTaskQueue": true,
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": [],
+			"label": "swift: Build All",
+			"detail": "swift build --build-tests"
+		}
+	]
+}

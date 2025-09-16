@@ -1,0 +1,33 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug",
+      "type": "swift",
+      "request": "launch",
+      "program": "${workspaceFolder}/.build/debug/dugraph",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "env": {},
+      "preLaunchTask": "swift: Build All"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:dugraph}",
+      "name": "Debug dugraph",
+      "program": "${workspaceFolder:dugraph}/.build/debug/dugraph",
+      "preLaunchTask": "swift: Build Debug dugraph"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:dugraph}",
+      "name": "Release dugraph",
+      "program": "${workspaceFolder:dugraph}/.build/release/dugraph",
+      "preLaunchTask": "swift: Build Release dugraph"
+    }
+  ]
+}
